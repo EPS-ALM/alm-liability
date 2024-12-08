@@ -5,8 +5,8 @@ from selic_api import get_selic_data  # API SELIC
 # ------------------------------------------------------------------------------------------------------------- #
 #                                                   FUNÇÕES
 
-# Coleta dados da API Selic
-def coletar_selic_anos(anos, data_inicial, data_final):
+# Coleta dados da API Selic, já fazendo a média por ano com base na data de inicio e fim
+def coletar_selic_anos(data_inicial, data_final):
     """
     Coleta os valores da Selic para os anos especificados usando dados de uma API.
 
@@ -22,45 +22,20 @@ def coletar_selic_anos(anos, data_inicial, data_final):
     
     if not dados_selic:
         print("Nenhum dado foi retornado pela API.")
-        return [None] * len(anos)
+        ano_inicial = int(data_inicial.split('/')[-1])
+        ano_final = int(data_final.split('/')[-1])
+
+        return {i:None for i in range(ano_inicial, ano_final+1)}
 
     # Processar os dados retornados pela API
     df_selic = pd.DataFrame(dados_selic)
     df_selic['data'] = pd.to_datetime(df_selic['data'], format='%d/%m/%Y').dt.year
     df_selic['valor'] = pd.to_numeric(df_selic['valor'])
-    dados_mapeados = dict(zip(df_selic['data'], df_selic['valor']))
+    
+    # Calcular a média dos valores para cada ano
+    medias_anuais = df_selic.groupby('data')['valor'].mean().to_dict()
 
-    # Preencher os valores de Selic para os anos fornecidos
-    selic_valores = [dados_mapeados.get(ano, None) for ano in anos]
-
-    return selic_valores
-
-# Calcula média anual das taxas
-def calcular_media_selic_por_ano(valores_selic, anos):
-    """
-    Calcula a média das taxas Selic por ano, ignorando valores None.
-
-    Parâmetros:
-    - valores_selic: Lista de taxas Selic para os anos.
-    - anos: Lista de anos correspondentes às taxas Selic.
-
-    Retorna:
-    - Um dicionário com o ano como chave e a média da Selic como valor.
-    """
-    # Dicionário para armazenar a média de Selic por ano
-    medias_por_ano = {}
-
-    for ano, selic in zip(anos, valores_selic):
-        if selic is not None:
-            if ano not in medias_por_ano:
-                medias_por_ano[ano] = []
-            medias_por_ano[ano].append(selic)
-
-    # Calcula a média para cada ano
-    for ano, selics in medias_por_ano.items():
-        medias_por_ano[ano] = sum(selics) / len(selics)
-
-    return medias_por_ano
+    return medias_anuais
 
 # Coleta TCV (Taxa de Crescimento Vegetativo) do excel do IBGE
 def coletar_tcv(arquivo, nome_planilha, ano_inicio, ano_fim, local=None):
@@ -113,10 +88,9 @@ def coletar_tcv(arquivo, nome_planilha, ano_inicio, ano_fim, local=None):
 #                                            DADOS PARA OS GRÁFICOS
 
 # Dados Selic (data_sensibilidade)
-anos = [2020, 2021, 2022, 2023, 2024]
-valores_selic = coletar_selic_anos(anos, "01/01/2020", "31/12/2024")
-media_selic_por_ano_dict = calcular_media_selic_por_ano(valores_selic, anos)
-media_selic_por_ano = [media_selic_por_ano_dict.get(ano, None) for ano in anos]
+valores_selic = coletar_selic_anos("01/01/2020", "31/12/2024") 
+anos = list(valores_selic.keys())  # Lista com os anos gerada pelas chaves do dict de valores
+valores_por_ano = [valores_selic[ano] if valores_selic[ano] is not None else 0.0 for ano in anos]  # Lista com os valores de Selic
 
 # Dados TCV (Dataset do IBGE)
 valores_tcv = coletar_tcv('../dataset/projecoes_2024_tab4_indicadores.xlsx', '4) INDICADORES', 2000, 2070, 'Brasil')
@@ -154,11 +128,11 @@ data_liquidez = pd.DataFrame({
 # Consome a API Selic para plotar dados reais da Selic. Os outros cenários dependem das decisões da empresa
 data_sensibilidade = pd.DataFrame({
     'Ano': anos,
-    'Selic': media_selic_por_ano,
-    'Fidelidade - 5 anos': list(map(lambda selic: 1.8 * (selic / 4.5), media_selic_por_ano)),
-    'Fidelidade - 15 anos': list(map(lambda selic: 2.8 * (selic / 4.5), media_selic_por_ano)),
-    'Fidelidade - 30 anos': list(map(lambda selic: 3.8 * (selic / 4.5), media_selic_por_ano)),
-    'Cenário Exagerado': list(map(lambda selic: 6 * (selic / 4.5), media_selic_por_ano))
+    'Selic': valores_por_ano,
+    'Fidelidade - 5 anos': list(map(lambda selic: 1.8 * (selic / 4.5), valores_por_ano)),
+    'Fidelidade - 15 anos': list(map(lambda selic: 2.8 * (selic / 4.5), valores_por_ano)),
+    'Fidelidade - 30 anos': list(map(lambda selic: 3.8 * (selic / 4.5), valores_por_ano)),
+    'Cenário Exagerado': list(map(lambda selic: 6 * (selic / 4.5), valores_por_ano))
 })
 
 # ------------------------------------------------------------------------------------------------------------- #
@@ -167,7 +141,7 @@ data_sensibilidade = pd.DataFrame({
 # Criação da figura
 fig = go.Figure()
 
-# Simulação de cenários econômicos
+# Simulação de cenários econômicos com base em dados demográficos
 fig.add_trace(go.Scatter(x=data_ativa_vs_aposentados['Ano'], 
                          y=data_ativa_vs_aposentados['Economicamente Ativa'], 
                          mode='lines+markers', name="Economicamente Ativa"))
