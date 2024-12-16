@@ -1,0 +1,62 @@
+# FastAPI Passives Project
+
+Este projeto utiliza FastAPI para criar endpoints que gerenciam gráficos baseados em dados econômicos e demográficos. Ele consome uma API SELIC e processa planilhas do IBGE para exibir visualizações interativas com Plotly.
+
+---
+
+## Como Executar com Docker
+
+### 1. Construir a Imagem Docker
+
+```bash
+docker build -t fastapi-passives .
+```
+
+### 2. Executar o Contêiner
+
+```bash
+docker run -d --name fastapi-passives -p 4201:4201 fastapi-passives
+```
+
+### 3. Verificar os Logs (Opcional)
+
+```bash
+docker logs fastapi-passives
+```
+
+O serviço estará acessível em [http://localhost:4201](http://localhost:4201).
+
+---
+
+## Endpoints Principais
+
+### `/grafico`
+- **Descrição**: Retorna um gráfico interativo gerado com Plotly.
+- **Método**: `GET`
+- **Resposta**: HTML contendo o gráfico.
+
+Acesse [http://localhost:4201/grafico](http://localhost:4201/grafico) para visualizar o gráfico no navegador.
+
+---
+
+## Notas Adicionais
+
+- O arquivo `projecoes_2024_tab4_indicadores.xlsx` é essencial para a execução dos scripts. Certifique-se de que ele está no diretório correto (`service/repository/dataset/`).
+- Certifique-se de que a API SELIC está acessível e retornando dados válidos.
+- Para depuração, use logs e testes locais antes de executar no Docker.
+
+---
+
+## Troubleshooting
+
+- **Erro: `ModuleNotFoundError`**:
+  Verifique se o diretório raiz está no `PYTHONPATH` ou se o `Dockerfile` foi configurado corretamente para definir o `PYTHONPATH`.
+
+- **Erro ao acessar a API SELIC**:
+  Certifique-se de que há conexão com a internet e que a API está funcionando.
+
+- **Problemas no Docker**:
+  Certifique-se de que o Docker está instalado e configurado corretamente. Use `docker ps` para verificar os contêineres em execução.
+
+---
+
