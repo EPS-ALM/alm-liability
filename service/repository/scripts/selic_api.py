@@ -27,7 +27,6 @@ def get_selic_data(data_inicial, data_final):
         response = requests.get(BASE_URL, params=params)
         response.raise_for_status()  # Lança um erro se o status for diferente de 200
         
-        # Retornar os dados em formato JSON
         return response.json()
     
     except requests.exceptions.RequestException as e:
