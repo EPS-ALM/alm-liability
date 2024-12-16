@@ -1,3 +1,11 @@
+import sys
+import os
+
+# Adiciona o diretório raiz ao PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+
+
+
 import pandas as pd
 import plotly.graph_objects as go
 from service.repository.scripts.selic_api import get_selic_data  # API SELIC
@@ -93,7 +101,7 @@ anos = list(valores_selic.keys())  # Lista com os anos gerada pelas chaves do di
 valores_por_ano = [valores_selic[ano] if valores_selic[ano] is not None else 0.0 for ano in anos]  # Lista com os valores de Selic
 
 # Dados TCV (Dataset do IBGE)
-valores_tcv = coletar_tcv('/home/kabas/Documents/unb/eps/alm-liability/service/repository/dataset/projecoes_2024_tab4_indicadores.xlsx', '4) INDICADORES', 2000, 2070, 'Brasil')
+valores_tcv = coletar_tcv('/app/service/repository/dataset/projecoes_2024_tab4_indicadores.xlsx', '4) INDICADORES', 2000, 2070, 'Brasil')
 anos_tcv = [ano for ano, _, _ in valores_tcv]  # Lista com os anos
 tcv = [tcv_valor for _, tcv_valor, _ in valores_tcv]  # Lista com os valores de TCV
 anos_tcv_filtrados = [ano for ano in anos_tcv if 2020 <= ano <= 2024]

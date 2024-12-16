@@ -1,2 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+venv/
 .env
-__pycache__
